@@ -1,0 +1,11 @@
+{
+  "name": "ruleset-editor-openapi",
+  "description": "Validate Open API Specification and generate code.",
+  "scripts": {
+    "build": "swagger-cli bundle openapi.yaml -o tmp/openapi.yaml --type yaml",
+    "test": "swagger-cli validate openapi.yaml"
+  },
+  "dependencies": {
+    "@apidevtools/swagger-cli": "^4.0"
+  }
+}

@@ -1,0 +1,257 @@
+openapi: 3.0.3
+info:
+  title: CS Video Call API
+  description: The API definition for CS Video Call API
+  # DO NOT change this version number
+  version: 0.0.1
+servers:
+  - url: "{scheme}://{address}/{basePath}"
+    description: A custom API server.
+    variables:
+      scheme:
+        default: http
+      address:
+        default: localhost
+      basePath:
+        default: v0
+components:
+  schemas:
+    DeviceID:
+      type: object
+      properties:
+        device_id:
+          type: string
+          example: 251b338e-8640-4334-87e8-d0af47717d0f
+          description: The unique of device, should be registered when app registered
+    Device:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/DeviceID"
+      properties:
+        device_id:
+          type: string
+          example: 251b338e-8640-4334-87e8-d0af47717d0f
+          description: The unique of device, should be stored when app registered new account
+        name:
+          type: string
+          description: Name of the device
+    Email:
+      title: Email
+      description: Schema for an email.
+      type: object
+      properties:
+        email:
+          type: string
+          description: The email address.
+          pattern: ^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$
+          example: "test@gmail.com"
+      required:
+        - email
+    Password:
+      title: Password
+      description: Schema for password.
+      type: object
+      properties:
+        password:
+          type: string
+          description: The password
+          minLength: 8
+          maxLength: 50
+          pattern: ^[a-zA-Z0-9]{8,50}$
+    AccessToken:
+      title: AccessToken
+      description: The access token, which is in JWT format, can be used for access protected resource
+      type: object
+      properties:
+        access_token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+    RefreshToken:
+      title: RefreshToken
+      description: The refresh token, which is a random string, can be used for retrieve new access token
+      properties:
+        refresh_token:
+          type: string
+          example: yP1RXW5wO5fKOXkW
+    Error:
+      title: Error
+      description: Schema for generic error.
+      type: object
+      properties:
+        title:
+          type: string
+          description: A brief, machine-readable message about the error.
+        detail:
+          type: string
+          description: A human-readable explanation of the error.
+        debug:
+          type: string
+          description: The debug information about the error.
+        stackTrace:
+          type: array
+          items:
+            type: object
+            description: The stack trace of the error.
+            properties:
+              file:
+                description: The file name of the trace.
+                type: string
+              function:
+                description: The function name of the trace
+                type: string
+              line:
+                description: The line number of the trace.
+                type: integer
+      required:
+        - title
+        - detail
+    ValidationError:
+      title: ValidationError
+      description: Schema for validation error.
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/Error"
+      properties:
+        field:
+          type: string
+          description: The field causing the error.
+      required:
+        - field
+    UnauthorizedError:
+      title: UnauthorizedError
+      description: Schema for generic error.
+      type: object
+      properties:
+        error:
+          title: Unauthorized
+          type: object
+          description: An error object.
+          allOf:
+            - $ref: "#/components/schemas/Error"
+  parameters: {}
+  responses:
+    Error:
+      description: A generic error.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    ValidationError:
+      description: A validation error.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ValidationError"
+    Unauthorized:
+      description: A unauthorized error.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/UnauthorizedError"
+  securitySchemes:
+    accessAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+security:
+  - accessAuth: []
+# Paths are sorted in alphabetical order
+paths:
+  /devices/register:
+    post:
+      summary: Register a new device
+      operationId: registerDevice
+      responses:
+        201:
+          description: DeviceRegistered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Device'
+      tags:
+        - Device
+  /auth/signup/email:
+    post:
+      summary: Sign up a new account using Email and Password
+      operationId: signUpWithEmailAndPassword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              allOf:
+                - $ref: "#/components/schemas/Email"
+                - $ref: "#/components/schemas/Password"
+                - $ref: "#/components/schemas/DeviceID"
+      responses:
+        201:
+          description: New Account Created
+          content:
+            application/json:
+              schema:
+                type: object
+                allOf:
+                  - $ref: "#/components/schemas/AccessToken"
+                  - $ref: "#/components/schemas/RefreshToken"
+        400:
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationError"
+        404:
+          description: The device not found
+        409:
+          description: A account with provided email exists
+        default:
+          description: Others status code
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      tags:
+        - Authentication
+  /auth/login/email:
+    post:
+      summary: Login using Email and Password
+      operationId: loginWithEmailAndPassword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              allOf:
+                - $ref: "#/components/schemas/Email"
+                - $ref: "#/components/schemas/Password"
+                - $ref: "#/components/schemas/DeviceID"
+      responses:
+        200:
+          description: Login Successful
+          content:
+            application/json:
+              schema:
+                type: object
+                allOf:
+                  - $ref: "#/components/schemas/AccessToken"
+                  - $ref: "#/components/schemas/RefreshToken"
+        400:
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationError"
+        401:
+          description: Wrong email or password
+        404:
+          description: The device not found or Email not found
+        default:
+          description: Others status code
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      tags:
+        - Authentication
+
+
