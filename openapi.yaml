@@ -21,17 +21,13 @@ components:
       properties:
         device_id:
           type: string
-          example: 251b338e-8640-4334-87e8-d0af47717d0f
+          format: uuid
           description: The unique of device, should be registered when app registered
     Device:
       type: object
       allOf:
         - $ref: "#/components/schemas/DeviceID"
       properties:
-        device_id:
-          type: string
-          example: 251b338e-8640-4334-87e8-d0af47717d0f
-          description: The unique of device, should be stored when app registered new account
         name:
           type: string
           description: Name of the device
@@ -121,14 +117,15 @@ components:
       title: UnauthorizedError
       description: Schema for generic error.
       type: object
-      properties:
-        error:
-          title: Unauthorized
-          type: object
-          description: An error object.
-          allOf:
-            - $ref: "#/components/schemas/Error"
-  parameters: {}
+      allOf:
+        - $ref: "#/components/schemas/Error"
+  parameters:
+    UserAgent:
+      in: header
+      name: User-Agent
+      schema:
+        type: string
+      required: true
   responses:
     Error:
       description: A generic error.
@@ -136,32 +133,27 @@ components:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/Error"
-
     ValidationError:
       description: A validation error.
       content:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/ValidationError"
-    Unauthorized:
-      description: A unauthorized error.
-      content:
-        application/problem+json:
-          schema:
-            $ref: "#/components/schemas/UnauthorizedError"
   securitySchemes:
-    accessAuth:
+    bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
 security:
-  - accessAuth: []
+  - bearerAuth: []
 # Paths are sorted in alphabetical order
 paths:
   /devices/register:
     post:
       summary: Register a new device
       operationId: registerDevice
+      parameters:
+        - $ref: "#/components/parameters/UserAgent"
       responses:
         201:
           description: DeviceRegistered
