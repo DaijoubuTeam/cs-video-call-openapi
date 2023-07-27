@@ -21,7 +21,7 @@ components:
       properties:
         device_id:
           type: string
-          format: uuid
+          # format: uuid
           description: The unique of device, should be registered when app registered
     Device:
       type: object
